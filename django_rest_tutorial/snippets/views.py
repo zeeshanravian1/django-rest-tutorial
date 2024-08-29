@@ -6,175 +6,179 @@ Description:
 
 """
 
-from django.db.models import QuerySet
-from django.http import Http404
-from rest_framework import status
+from django.db.models import Manager, QuerySet
+from rest_framework import generics, mixins
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from .models import Snippet
 from .serializers import SnippetSerializer
 
 
-class SnippetList(APIView):
+class SnippetList(
+    mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView
+):
     """
-    List all snippets, or create a new snippet.
+    Snippet List Class
 
-    """
+    Description:
+        - This class defines the view for the Snippet model.
 
-    def get(self, request: Request, format=None) -> Response:
-        """
-        List all code snippets.
+    Args:
+        - `mixins.ListModelMixin`: A mixin class that provides a `list` method.
+        - `mixins.CreateModelMixin`: A mixin class that provides a `create`
+        method.
+        - `generics.GenericAPIView`: A generic class-based view that provides
+        the core functionality.
 
-        Description:
-            - This method returns all code snippets in the database.
+    Attributes:
+        - `queryset (QuerySet[Snippet] | Manager[Snippet] | None)`: The
+        queryset that will be used to retrieve the Snippet objects.
+        - `serializer_class (SnippetSerializer)`: The serializer class that
+        will be used to serialize the Snippet objects.
 
-        Args:
-            - `request (Request)`: The request object.  **(Required)**
-            - `format (str)`: The format of the response.  **(Optional)**
-
-        Returns:
-            - `Response`: The response object containing the serialized
-            snippets.
-
-        """
-        snippets: QuerySet[Snippet] = (  # type: ignore
-            Snippet.objects.all()  # pylint: disable=no-member
-        )
-        serializer: SnippetSerializer = SnippetSerializer(
-            instance=snippets, many=True
-        )
-        return Response(data=serializer.data)
-
-    def post(self, request: Request, format=None) -> Response:
-        """
-        Create a new code snippet.
-
-        Description:
-            - This method creates a new code snippet in the database.
-
-        Args:
-            - `request (Request)`: The request object.  **(Required)**
-            - `format (str)`: The format of the response.  **(Optional)**
-
-        Returns:
-            - `Response`: The response object containing the serialized
-            snippet.
-
-        """
-
-        serializer: SnippetSerializer = SnippetSerializer(data=request.data)
-
-        if not serializer.is_valid():
-            return Response(
-                data=serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        serializer.save()
-        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
-
-
-class SnippetDetail(APIView):
-    """
-    Retrieve, update or delete a snippet instance.
+    Methods:
+        - `get`: Retrieves a list of Snippet objects.
+        - `post`: Creates a new Snippet object.
 
     """
 
-    def get_object(self, pk) -> Snippet:
+    queryset: QuerySet[Snippet] | Manager[Snippet] | None = (  # type: ignore
+        Snippet.objects.all()  # pylint: disable=no-member
+    )
+    serializer_class = SnippetSerializer
+
+    def get(self, request: Request, *args, **kwargs) -> Response:
         """
-        Retrieve a snippet instance.
+        Get Method
 
         Description:
-            - This method retrieves a single snippet instance from the
-            database.
+            - This method retrieves a list of Snippet objects.
 
         Args:
-            - `pk (int)`: The primary key of the snippet.  **(Required)**
+            - `request (Request)`: The request object. **(Required)**
+            - `*args`: Variable length argument list. **(Optional)**
+            - `**kwargs`: Arbitrary keyword arguments. **(Optional)**
 
         Returns:
-            - `Snippet`: The snippet instance.
+            - `Response`: The response object.
 
         """
 
-        try:
-            return Snippet.objects.get(pk=pk)  # pylint: disable=no-member
+        return self.list(request, *args, **kwargs)
 
-        except Snippet.DoesNotExist as exc:  # pylint: disable=no-member
-            raise Http404 from exc
-
-    def get(self, request, pk, format=None) -> Response:
+    def post(self, request: Request, *args, **kwargs) -> Response:
         """
-        Retrieve a snippet instance.
+        Post Method
 
         Description:
-            - This method retrieves a snippet instance from the database.
+            - This method creates a new Snippet object.
 
         Args:
-            - `request (Request)`: The request object.  **(Required)**
-            - `pk (int)`: The primary key of the snippet.  **(Required)**
-            - `format (str)`: The format of the response.  **(Optional)**
+            - `request (Request)`: The request object. **(Required)**
+            - `*args`: Variable length argument list. **(Optional)**
+            - `**kwargs`: Arbitrary keyword arguments. **(Optional)**
 
         Returns:
-            - `Response`: The response object containing the serialized
-            snippet.
+            - `Response`: The response object.
 
         """
 
-        snippet: Snippet = self.get_object(pk=pk)
-        serializer: SnippetSerializer = SnippetSerializer(instance=snippet)
+        return self.create(request, *args, **kwargs)
 
-        return Response(data=serializer.data)
 
-    def put(self, request, pk, format=None) -> Response:
+class SnippetDetail(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    generics.GenericAPIView,
+):
+    """
+    Snippet Detail Class
+
+    Description:
+        - This class defines the view for a single Snippet object.
+
+    Args:
+        - `mixins.RetrieveModelMixin`: A mixin class that provides a `retrieve`
+        method.
+        - `mixins.UpdateModelMixin`: A mixin class that provides an `update`
+        method.
+        - `mixins.DestroyModelMixin`: A mixin class that provides a `destroy`
+        method.
+        - `generics.GenericAPIView`: A generic class-based view that provides
+        the core functionality.
+
+    Attributes:
+        - `queryset (QuerySet[Snippet] | Manager[Snippet] | None)`: The
+        queryset that will be used to retrieve the Snippet objects.
+        - `serializer_class (SnippetSerializer)`: The serializer class that
+        will be used to serialize the Snippet objects.
+
+    Methods:
+        - `get`: Retrieves a single Snippet object.
+        - `put`: Updates a single Snippet object.
+        - `delete`: Deletes a single Snippet object.
+
+    """
+
+    queryset: QuerySet[Snippet] | Manager[Snippet] | None = (  # type: ignore
+        Snippet.objects.all()  # pylint: disable=no-member
+    )
+    serializer_class = SnippetSerializer
+
+    def get(self, request: Request, *args, **kwargs) -> Response:
         """
-        Update a snippet instance.
+        Get Method
 
         Description:
-            - This method updates a snippet instance in the database.
+            - This method retrieves a single Snippet object.
 
         Args:
-            - `request (Request)`: The request object.  **(Required)**
-            - `pk (int)`: The primary key of the snippet.  **(Required)**
-            - `format (str)`: The format of the response.  **(Optional)**
+            - `request (Request)`: The request object. **(Required)**
+            - `*args`: Variable length argument list. **(Optional)**
+            - `**kwargs`: Arbitrary keyword arguments. **(Optional)**
 
         Returns:
-            - `Response`: The response object containing the serialized
-            snippet.
+            - `Response`: The response object.
 
         """
-        snippet: Snippet = self.get_object(pk=pk)
-        serializer: SnippetSerializer = SnippetSerializer(
-            instance=snippet, data=request.data
-        )
+        return self.retrieve(request, *args, **kwargs)
 
-        if not serializer.is_valid():
-            return Response(
-                data=serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        serializer.save()
-
-        return Response(data=serializer.data)
-
-    def delete(self, request, pk, format=None) -> Response:
+    def put(self, request: Request, *args, **kwargs) -> Response:
         """
-        Delete a snippet instance.
+        Put Method
 
         Description:
-            - This method deletes a snippet instance from the database.
+            - This method updates a single Snippet object.
 
         Args:
-            - `request (Request)`: The request object.  **(Required)**
-            - `pk (int)`: The primary key of the snippet.  **(Required)**
-            - `format (str)`: The format of the response.  **(Optional)**
+            - `request (Request)`: The request object. **(Required)**
+            - `*args`: Variable length argument list. **(Optional)**
+            - `**kwargs`: Arbitrary keyword arguments. **(Optional)**
 
         Returns:
-            - `Response`: The response object containing the serialized
-            snippet.
+            - `Response`: The response object.
 
         """
-        snippet: Snippet = self.get_object(pk)
-        snippet.delete()
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return self.update(request, *args, **kwargs)
+
+    def delete(self, request: Request, *args, **kwargs) -> Response:
+        """
+        Delete Method
+
+        Description:
+            - This method deletes a single Snippet object.
+
+        Args:
+            - `request (Request)`: The request object. **(Required)**
+            - `*args`: Variable length argument list. **(Optional)**
+            - `**kwargs`: Arbitrary keyword arguments. **(Optional)**
+
+        Returns:
+            - `Response`: The response object.
+
+        """
+
+        return self.destroy(request, *args, **kwargs)
