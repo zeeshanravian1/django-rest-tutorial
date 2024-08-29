@@ -6,9 +6,59 @@ Description:
 
 """
 
-from rest_framework.serializers import ModelSerializer
+from django.contrib.auth.models import User
+from rest_framework.serializers import (
+    ManyRelatedField,
+    ModelSerializer,
+    PrimaryKeyRelatedField,
+    ReadOnlyField,
+    RelatedField,
+)
 
 from .models import Snippet
+
+
+class UserSerializer(ModelSerializer):
+    """
+    User Serializer Class
+
+    Description:
+        - This class is used to serialize the User model.
+
+    Attributes:
+        - `snippets (list[Snippet])`: The snippets of the user.
+
+    Methods:
+        - `None`
+
+    """
+
+    snippets: RelatedField[Snippet, Snippet, Snippet] | ManyRelatedField = (
+        PrimaryKeyRelatedField(
+            many=True,
+            queryset=Snippet.objects.all(),  # pylint: disable=no-member
+        )
+    )
+
+    class Meta:  # type: ignore
+        """
+        User Meta Class
+
+        Description:
+            - This class contains metadata for the `UserSerializer` class.
+
+        Attributes:
+            - `model (type[User])`: The model that the serializer is based on.
+            - `fields (list[str])`: The fields that the serializer should
+            include.
+
+        Methods:
+            - `None`
+
+        """
+
+        model: type[User] = User
+        fields: list[str] = ["id", "username", "snippets"]
 
 
 class SnippetSerializer(ModelSerializer):
@@ -19,17 +69,14 @@ class SnippetSerializer(ModelSerializer):
         - This class is used to serialize the Snippet model.
 
     Attributes:
-        - `id (int)`: The id of the snippet.
-        - `title (str)`: The title of the snippet.
-        - `code (str)`: The code of the snippet.
-        - `linenos (bool)`: The line numbers of the snippet.
-        - `language (str)`: The language of the snippet.
-        - `style (str)`: The style of the snippet.
+        - `owner (str)`: The owner of the snippet.
 
     Methods:
         - `None`
 
     """
+
+    owner = ReadOnlyField(source="owner.username")
 
     class Meta:  # type: ignore
         """
@@ -39,7 +86,8 @@ class SnippetSerializer(ModelSerializer):
             - This class contains metadata for the `SnippetSerializer` class.
 
         Attributes:
-            - `model (Model)`: The model that the serializer is based on.
+            - `model (type[Snippet])`: The model that the serializer is based
+            on.
             - `fields (list[str])`: The fields that the serializer should
             include.
 
@@ -56,4 +104,5 @@ class SnippetSerializer(ModelSerializer):
             "linenos",
             "language",
             "style",
+            "owner",
         ]

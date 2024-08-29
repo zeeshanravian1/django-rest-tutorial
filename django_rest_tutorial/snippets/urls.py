@@ -13,8 +13,10 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from . import views
 
 urlpatterns: list[URLPattern | URLResolver] = [
-    path(route="", view=views.SnippetList.as_view()),
-    path(route="<int:pk>/", view=views.SnippetDetail.as_view()),
+    path(route="snippets/", view=views.SnippetList.as_view()),
+    path(route="snippets/<int:pk>/", view=views.SnippetDetail.as_view()),
+    path(route="users/", view=views.UserList.as_view()),
+    path(route="users/<int:pk>/", view=views.UserDetail.as_view()),
 ]
 
 

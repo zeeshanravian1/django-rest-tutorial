@@ -6,14 +6,21 @@ Description:
 
 """
 
+from typing import Literal
+
 from django.db.models import (
+    CASCADE,
     BooleanField,
     CharField,
     DateTimeField,
+    ForeignKey,
     Model,
     TextField,
 )
-from pygments.lexers import get_all_lexers
+from pygments import highlight
+from pygments.formatters.html import HtmlFormatter
+from pygments.lexer import Lexer
+from pygments.lexers import get_all_lexers, get_lexer_by_name
 from pygments.styles import get_all_styles
 
 LEXERS: list[tuple[str, tuple[str, ...], tuple[str, ...], tuple[str, ...]]] = [
@@ -42,6 +49,9 @@ class Snippet(Model):
         snippet.
         - `language (CharField)`: Language of the snippet.
         - `style (CharField)`: Style of the snippet.
+        - `owner (ForeignKey)`: The owner of the snippet.
+        - `highlighted (TextField)`: The highlighted HTML representation of the
+        snippet.
 
     Methods:
         - `None`
@@ -58,6 +68,10 @@ class Snippet(Model):
     style: CharField = CharField(
         choices=STYLE_CHOICES, default="friendly", max_length=100
     )
+    owner: ForeignKey = ForeignKey(
+        to="auth.User", related_name="snippets", on_delete=CASCADE
+    )
+    highlighted: TextField = TextField()
 
     class Meta:
         """
@@ -71,8 +85,31 @@ class Snippet(Model):
             - `ordering (list[str])`: List of fields to order the queryset by.
 
         Methods:
-            - `None`
+            - `save(*args, **kwargs) -> None`: Save the snippet to the
+            database.
 
         """
 
         ordering: list[str] = ["created"]
+
+    def save(self, *args, **kwargs) -> None:
+        """
+        Use the `pygments` library to create a highlighted HTML
+        representation of the code snippet.
+        """
+        lexer: Lexer = get_lexer_by_name(_alias=self.language)
+        linenos: Literal["table"] | Literal[False] = (
+            "table" if self.linenos else False
+        )
+        options: dict[str, str] = {"title": self.title} if self.title else {}
+        formatter: HtmlFormatter = HtmlFormatter(  # type: ignore
+            style=self.style,
+            linenos=linenos,
+            full=True,
+            **options,  # type: ignore
+        )
+
+        self.highlighted = highlight(
+            code=self.code, lexer=lexer, formatter=formatter
+        )
+        super().save(*args, **kwargs)

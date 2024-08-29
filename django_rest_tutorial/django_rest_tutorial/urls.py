@@ -23,7 +23,8 @@ from django.urls.resolvers import URLResolver
 
 urlpatterns: list[URLResolver] = [
     path(route="admin/", view=admin.site.urls),
-    path(route="snippets/", view=include("snippets.urls")),
+    path(route="", view=include("snippets.urls")),
+    path(route="api-auth/", view=include("rest_framework.urls")),
 ]
 
 if not settings.TESTING:
