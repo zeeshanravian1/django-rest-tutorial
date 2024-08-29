@@ -52,6 +52,8 @@ INSTALLED_APPS: list[str] = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
+    "snippets.apps.SnippetsConfig",
 ]
 
 MIDDLEWARE: list[str] = [

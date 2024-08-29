@@ -3,4 +3,12 @@ ignore:
     - expires: 3000-01-01T00:00:00+0000
       package: jinja2
       reason: "False positive: Jinja2's from_string function vulnerability is invalid if untrusted templates are sandboxed."
+  CVE-2024-35195:
+    - expires: 3000-01-01T00:00:00+0000
+      package: requests
+      reason: "False positive: This vulnerability only occurs when 'verify=False' is explicitly set, which is not the case in this codebase."
+  GHSA-9wx4-h78v-vm56:
+    - expires: 3000-01-01T00:00:00+0000
+      package: requests
+      reason: "False positive: This vulnerability only occurs when 'verify=False' is explicitly set, which is not the case in this codebase."
 version: "1.0"

@@ -18,11 +18,12 @@ Including another URLconf
 from debug_toolbar.toolbar import debug_toolbar_urls  # type: ignore
 from django.conf import settings
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from django.urls.resolvers import URLResolver
 
 urlpatterns: list[URLResolver] = [
-    path("admin/", admin.site.urls),
+    path(route="admin/", view=admin.site.urls),
+    path(route="snippets/", view=include("snippets.urls")),
 ]
 
 if not settings.TESTING:
