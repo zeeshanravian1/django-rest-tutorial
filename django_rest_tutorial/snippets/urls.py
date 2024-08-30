@@ -6,36 +6,20 @@ Description:
 
 """
 
-from django.urls import path
-from django.urls.resolvers import URLPattern, URLResolver
-from rest_framework.urlpatterns import format_suffix_patterns
+from django.urls import include, path
+from django.urls.resolvers import URLResolver
+from rest_framework.routers import DefaultRouter
 
 from . import views
 
-# API endpoints
-urlpatterns: list[URLPattern | URLResolver] = format_suffix_patterns(
-    [
-        path(route="", view=views.api_root),
-        path(
-            route="snippets/",
-            view=views.SnippetList.as_view(),
-            name="snippet-list",
-        ),
-        path(
-            route="snippets/<int:pk>/",
-            view=views.SnippetDetail.as_view(),
-            name="snippet-detail",
-        ),
-        path(
-            route="snippets/<int:pk>/highlight/",
-            view=views.SnippetHighlight.as_view(),
-            name="snippet-highlight",
-        ),
-        path(route="users/", view=views.UserList.as_view(), name="user-list"),
-        path(
-            route="users/<int:pk>/",
-            view=views.UserDetail.as_view(),
-            name="user-detail",
-        ),
-    ]
+# Create a router and register our ViewSets with it.
+router: DefaultRouter = DefaultRouter()
+router.register(
+    prefix=r"snippets", viewset=views.SnippetViewSet, basename="snippet"
 )
+router.register(prefix=r"users", viewset=views.UserViewSet, basename="user")
+
+# The API URLs are now determined automatically by the router.
+urlpatterns: list[URLResolver] = [
+    path("", include(router.urls)),
+]
