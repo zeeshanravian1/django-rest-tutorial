@@ -8,9 +8,11 @@ Description:
 
 from django.contrib.auth.models import User
 from rest_framework.serializers import (
+    Hyperlink,
+    HyperlinkedIdentityField,
+    HyperlinkedModelSerializer,
+    HyperlinkedRelatedField,
     ManyRelatedField,
-    ModelSerializer,
-    PrimaryKeyRelatedField,
     ReadOnlyField,
     RelatedField,
 )
@@ -18,7 +20,7 @@ from rest_framework.serializers import (
 from .models import Snippet
 
 
-class UserSerializer(ModelSerializer):
+class UserSerializer(HyperlinkedModelSerializer):
     """
     User Serializer Class
 
@@ -26,17 +28,17 @@ class UserSerializer(ModelSerializer):
         - This class is used to serialize the User model.
 
     Attributes:
-        - `snippets (list[Snippet])`: The snippets of the user.
+        - `snippets (RelatedField[Snippet, str, Hyperlink] | ManyRelatedField)`
+        : The snippets of the user.
 
     Methods:
         - `None`
 
     """
 
-    snippets: RelatedField[Snippet, Snippet, Snippet] | ManyRelatedField = (
-        PrimaryKeyRelatedField(
-            many=True,
-            queryset=Snippet.objects.all(),  # pylint: disable=no-member
+    snippets: RelatedField[User, str, Hyperlink] | ManyRelatedField = (
+        HyperlinkedRelatedField(
+            many=True, view_name="snippet-detail", read_only=True
         )
     )
 
@@ -58,10 +60,10 @@ class UserSerializer(ModelSerializer):
         """
 
         model: type[User] = User
-        fields: list[str] = ["id", "username", "snippets"]
+        fields: list[str] = ["url", "id", "username", "snippets"]
 
 
-class SnippetSerializer(ModelSerializer):
+class SnippetSerializer(HyperlinkedModelSerializer):
     """
     Snippet Serializer Class
 
@@ -70,6 +72,8 @@ class SnippetSerializer(ModelSerializer):
 
     Attributes:
         - `owner (str)`: The owner of the snippet.
+        - `highlight (RelatedField[Snippet, str, Hyperlink] |
+        ManyRelatedField)`: The highlight of the snippet.
 
     Methods:
         - `None`
@@ -77,6 +81,9 @@ class SnippetSerializer(ModelSerializer):
     """
 
     owner = ReadOnlyField(source="owner.username")
+    highlight: RelatedField[Snippet, str, Hyperlink] | ManyRelatedField = (
+        HyperlinkedIdentityField(view_name="snippet-highlight", format="html")
+    )
 
     class Meta:  # type: ignore
         """
@@ -98,6 +105,7 @@ class SnippetSerializer(ModelSerializer):
 
         model: type[Snippet] = Snippet
         fields: list[str] = [
+            "url",
             "id",
             "title",
             "code",
@@ -105,4 +113,5 @@ class SnippetSerializer(ModelSerializer):
             "language",
             "style",
             "owner",
+            "highlight",
         ]

@@ -25,9 +25,9 @@ class IsOwnerOrReadOnly(BasePermission):
         Check if the user has permission to access the object.
 
         Args:
-            - `request (Request)`: The request object.
-            - `view`: The view object.
-            - `obj`: The object to check permissions for.
+            - `request (Request)`: The request object. **(Required)**
+            - `view`: The view object. **(Required)**
+            - `obj`: The object to check permissions for. **(Required)**
 
         Returns:
             - `Literal[True]`: Whether the user has permission to access the

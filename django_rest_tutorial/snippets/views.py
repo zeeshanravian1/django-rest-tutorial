@@ -6,9 +6,13 @@ Description:
 
 """
 
+from typing import Sequence
+
 from django.contrib.auth.models import User
 from django.db.models import Manager, QuerySet
+from rest_framework.decorators import api_view
 from rest_framework.generics import (
+    GenericAPIView,
     ListAPIView,
     ListCreateAPIView,
     RetrieveAPIView,
@@ -20,10 +24,95 @@ from rest_framework.permissions import (
     OperandHolder,
     SingleOperandHolder,
 )
+from rest_framework.renderers import BaseRenderer, StaticHTMLRenderer
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.reverse import reverse
 
 from .models import Snippet
 from .permissions import IsOwnerOrReadOnly
 from .serializers import SnippetSerializer, UserSerializer
+
+
+@api_view(["GET"])
+def api_root(
+    request: Request,
+    format: str | None = None,  # pylint: disable=redefined-builtin
+) -> Response:
+    """
+    API Root Function
+
+    Description:
+        - This function is used to display the API root.
+
+    Args:
+        - `request (Request)`: The request object. **(Required)**
+        - `format (str)`: The format of the request. **(Optional)**
+
+    Returns:
+        - `Response`: The response object.
+
+    """
+
+    return Response(
+        {
+            "users": reverse(
+                viewname="user-list", request=request, format=format
+            ),
+            "snippets": reverse(
+                viewname="snippet-list", request=request, format=format
+            ),
+        }
+    )
+
+
+class SnippetHighlight(GenericAPIView):
+    """
+    Snippet Highlight Class
+
+    Description:
+        - This class defines the view for the Snippet Highlight.
+
+    Attributes:
+        - `queryset (QuerySet[Snippet] | Manager[Snippet] | None)`: The
+        queryset that will be used to retrieve the Snippet objects.
+        - `renderer_classes (Sequence[type[BaseRenderer]])`: The renderer
+        classes that will be used to render the Snippet objects.
+
+    Methods:
+        - `get`: The get method that will be used to get the Snippet object.
+
+    """
+
+    queryset: QuerySet[Snippet] | Manager[Snippet] | None = (  # type: ignore
+        Snippet.objects.all()  # pylint: disable=no-member
+    )
+    renderer_classes: Sequence[type[BaseRenderer]] = [StaticHTMLRenderer]
+
+    def get(
+        self,
+        request: Request,  # pylint: disable=unused-argument
+        *args,  # pylint: disable=unused-argument
+        **kwargs,  # pylint: disable=unused-argument
+    ) -> Response:
+        """
+        Get Method
+
+        Description:
+            - This method is used to get the Snippet object.
+
+        Args:
+            - `request (Request)`: The request object. **(Required)**
+            - `args`: The arguments. **(Optional)**
+            - `kwargs`: The keyword arguments. **(Optional)**
+
+        Returns:
+            - `Response`: The response object.
+
+        """
+
+        snippet: Snippet = self.get_object()
+        return Response(data=snippet.highlighted)
 
 
 class UserList(ListAPIView):
@@ -110,7 +199,7 @@ class SnippetList(ListCreateAPIView):
 
         Args:
             - `serializer (SnippetSerializer)`: The serializer that will be
-            used to create the Snippet object.
+            used to create the Snippet object. **(Required)**
 
         Returns:
             - `None`
